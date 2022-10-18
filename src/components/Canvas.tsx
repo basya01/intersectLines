@@ -4,6 +4,7 @@ import { drawCircle } from '../CanvasAPI/drawCircle';
 import { drawLine } from '../CanvasAPI/drawLine';
 import { Coords } from '../models/Coords';
 import { History } from '../models/History';
+import { calcLineLength } from '../utils/calcLineLength';
 import { intersect } from '../utils/intersect';
 
 interface CanvasProps {
@@ -25,21 +26,22 @@ const Canvas: FC<CanvasProps> = ({
   width,
   height,
 }) => {
-  const [moveTo, setMoveTo] = useState<Coords | null>(null);
+  const [currentMoveTo, setCurrentMoveTo] = useState<Coords | null>(null);
   const [currentCircles, setCurrentCircles] = useState({});
 
   const clickHandler = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!cursorCoords) return;
 
-    setMoveTo(cursorCoords);
-    if (moveTo) {
-      setMoveTo(null);
+    setCurrentMoveTo(cursorCoords);
+    if (currentMoveTo) {
+      setCurrentMoveTo(null);
       setHistory({
         lines: [
           ...history.lines,
           {
-            moveTo,
+            moveTo: currentMoveTo,
             lineTo: cursorCoords,
+            lengthX: Math.abs(currentMoveTo.x - cursorCoords.x),
           },
         ],
         circles: [...history.circles, currentCircles],
@@ -50,7 +52,7 @@ const Canvas: FC<CanvasProps> = ({
   const rightClickHandler = (e: React.MouseEvent<HTMLCanvasElement>) => {
     e.preventDefault();
 
-    if (moveTo && ctx) {
+    if (currentMoveTo && ctx) {
       clearCanvas(ctx, width, height);
 
       history.lines.forEach((line) => {
@@ -62,17 +64,17 @@ const Canvas: FC<CanvasProps> = ({
       );
     }
 
-    setMoveTo(null);
+    setCurrentMoveTo(null);
   };
 
   const mouseMoveHandler = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!ctx || !moveTo || !cursorCoords) return;
+    if (!ctx || !currentMoveTo || !cursorCoords) return;
 
     setCurrentCircles({});
 
     clearCanvas(ctx, width, height);
     drawLine(ctx, {
-      moveTo,
+      moveTo: currentMoveTo,
       lineTo: { x: cursorCoords.x, y: cursorCoords.y },
     });
 
@@ -84,8 +86,8 @@ const Canvas: FC<CanvasProps> = ({
         line.moveTo.y,
         line.lineTo?.x,
         line.lineTo?.y,
-        moveTo.x,
-        moveTo.y,
+        currentMoveTo.x,
+        currentMoveTo.y,
         cursorCoords.x,
         cursorCoords.y
       );

@@ -1,8 +1,8 @@
 import { Line } from '../models/Line';
 
-export const calcShorterLine = ({ moveTo, lineTo }: Line) => {
-  const moveToX = moveTo.x - lineTo.x > 0 ? moveTo.x - 1 : moveTo.x + 1;
-  const lineToX = moveTo.x - lineTo.x > 0 ? lineTo.x + 1 : lineTo.x - 1;
+export const calcShorterLine = ({ moveTo, lineTo, lengthX }: Line, step: number) => {
+  const moveToX = moveTo.x - lineTo.x > 0 ? moveTo.x - step : moveTo.x + step;
+  const lineToX = moveTo.x - lineTo.x > 0 ? lineTo.x + step : lineTo.x - step;
     
   const newMoveTo = {
     x: moveToX,
@@ -17,7 +17,7 @@ export const calcShorterLine = ({ moveTo, lineTo }: Line) => {
       moveTo.y,
   };
 
-  if (Math.abs(moveToX - lineToX) === 1) {
+  if (Math.abs(moveToX - lineToX) < 1) {
     return {
       moveTo: newMoveTo,
       lineTo: newMoveTo,
@@ -27,5 +27,6 @@ export const calcShorterLine = ({ moveTo, lineTo }: Line) => {
   return {
     moveTo: newMoveTo,
     lineTo: newLineTo,
+    lengthX
   };
 };

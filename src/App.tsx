@@ -22,22 +22,23 @@ const App = () => {
     let animationCircles: Line[] = [];
     const stopAnimation = new Set();
 
-    const drawFrame = () => {
+    function drawFrame() {
       if (!ctx) return;
       clearCanvas(ctx, width, height);
       animationCircles = [];
 
       animationLines.forEach((line, index, arr) => {
-        if (!cursorCoords) return;
-
-        const newLine = calcShorterLine(line);
+        const newLine = calcShorterLine(line, line.lengthX / 360);
         drawLine(ctx, newLine);
 
         if (newLine.moveTo.x === newLine.lineTo.x) {
+          console.log(1);
           stopAnimation.add(index);
         } else {
-          arr[index] = newLine;
-          animationCircles.push(newLine);
+          if (newLine.lengthX) {
+            arr[index] = newLine;
+            animationCircles.push(newLine);
+          }
         }
       });
 
@@ -53,13 +54,13 @@ const App = () => {
             arr[i].lineTo.x,
             arr[i].lineTo.y
           );
-          
+
           if (circleCoords) {
             drawCircle(ctx, circleCoords);
           }
         }
       });
-      
+
       if (animationLines.length !== stopAnimation.size) {
         requestAnimationFrame(drawFrame);
       }
