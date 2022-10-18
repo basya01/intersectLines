@@ -25,35 +25,48 @@ const Canvas: FC<CanvasProps> = ({
   width,
   height,
 }) => {
-  const [moveTo, setMoveTo] = useState<Coords>();
+  const [moveTo, setMoveTo] = useState<Coords | null>(null);
   const [currentCircles, setCurrentCircles] = useState({});
-  const [isMouseDown, setIsMouseDown] = useState(false);
 
-  const mouseDownHandler = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!ctx) return;
+  const clickHandler = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!cursorCoords) return;
 
     setMoveTo(cursorCoords);
-    setIsMouseDown(true);
+    if (moveTo) {
+      setMoveTo(null);
+      setHistory({
+        lines: [
+          ...history.lines,
+          {
+            moveTo,
+            lineTo: cursorCoords,
+          },
+        ],
+        circles: [...history.circles, currentCircles],
+      });
+    }
   };
 
-  const mouseUpHandler = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!moveTo || !cursorCoords) return;
+  const rightClickHandler = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
 
-    setHistory({
-      lines: [
-        ...history.lines,
-        {
-          moveTo,
-          lineTo: cursorCoords,
-        },
-      ],
-      circles: [...history.circles, currentCircles],
-    });
-    setIsMouseDown(false);
+    if (moveTo && ctx) {
+      clearCanvas(ctx, width, height);
+
+      history.lines.forEach((line) => {
+        drawLine(ctx, line);
+      });
+
+      history.circles.forEach((dots) =>
+        Object.values(dots).forEach((dot) => drawCircle(ctx, dot))
+      );
+    }
+
+    setMoveTo(null);
   };
 
   const mouseMoveHandler = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!ctx || !isMouseDown || !moveTo || !cursorCoords) return;
+    if (!ctx || !moveTo || !cursorCoords) return;
 
     setCurrentCircles({});
 
@@ -94,9 +107,9 @@ const Canvas: FC<CanvasProps> = ({
   return (
     <canvas
       ref={canvasRef}
+      onContextMenu={rightClickHandler}
       onMouseMove={mouseMoveHandler}
-      onMouseDown={mouseDownHandler}
-      onMouseUp={mouseUpHandler}
+      onClick={clickHandler}
       id="canvas"
       width={width}
       height={height}
