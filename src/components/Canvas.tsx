@@ -1,109 +1,52 @@
 import React, { Dispatch, FC, SetStateAction, useState } from 'react';
-import { clearCanvas } from '../CanvasAPI/clearCanvas';
-import { drawCircle } from '../CanvasAPI/drawCircle';
-import { drawLine } from '../CanvasAPI/drawLine';
 import { Coords } from '../models/Coords';
 import { History } from '../models/History';
-import { calcLineLength } from '../utils/calcLineLength';
-import { intersect } from '../utils/intersect';
+import { CanvasActions } from '../services/CanvasActions';
+import { CanvasDrawing } from '../services/CanvasDrawing';
 
 interface CanvasProps {
   canvasRef: React.RefObject<HTMLCanvasElement>;
-  cursorCoords: Coords | undefined;
-  ctx: CanvasRenderingContext2D | null | undefined;
+  cursorCoords: Coords;
   history: History;
   setHistory: Dispatch<SetStateAction<History>>;
-  width: number;
-  height: number;
+  cs: CanvasDrawing;
 }
 
 const Canvas: FC<CanvasProps> = ({
   canvasRef,
-  ctx,
   cursorCoords,
   history,
   setHistory,
-  width,
-  height,
+  cs,
 }) => {
   const [currentMoveTo, setCurrentMoveTo] = useState<Coords | null>(null);
   const [currentCircles, setCurrentCircles] = useState({});
 
+  const ca = new CanvasActions(cs);
+
   const clickHandler = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!cursorCoords) return;
 
-    setCurrentMoveTo(cursorCoords);
+    setCurrentMoveTo(cursorCoords); // Start drawing
+
     if (currentMoveTo) {
-      setCurrentMoveTo(null);
-      setHistory({
-        lines: [
-          ...history.lines,
-          {
-            moveTo: currentMoveTo,
-            lineTo: cursorCoords,
-            lengthX: Math.abs(currentMoveTo.x - cursorCoords.x),
-          },
-        ],
-        circles: [...history.circles, currentCircles],
-      });
+      ca.finishDrawing(
+        setCurrentMoveTo,
+        setHistory,
+        cursorCoords,
+        currentMoveTo,
+        currentCircles
+      );
     }
   };
 
   const rightClickHandler = (e: React.MouseEvent<HTMLCanvasElement>) => {
     e.preventDefault();
-
-    if (currentMoveTo && ctx) {
-      clearCanvas(ctx, width, height);
-
-      history.lines.forEach((line) => {
-        drawLine(ctx, line);
-      });
-
-      history.circles.forEach((dots) =>
-        Object.values(dots).forEach((dot) => drawCircle(ctx, dot))
-      );
-    }
-
-    setCurrentMoveTo(null);
+    ca.cancelDrawing(history);
   };
 
   const mouseMoveHandler = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!ctx || !currentMoveTo || !cursorCoords) return;
-
-    setCurrentCircles({});
-
-    clearCanvas(ctx, width, height);
-    drawLine(ctx, {
-      moveTo: currentMoveTo,
-      lineTo: { x: cursorCoords.x, y: cursorCoords.y },
-    });
-
-    history.lines.forEach((line, index) => {
-      drawLine(ctx, line);
-
-      const circleCoords = intersect(
-        line.moveTo.x,
-        line.moveTo.y,
-        line.lineTo?.x,
-        line.lineTo?.y,
-        currentMoveTo.x,
-        currentMoveTo.y,
-        cursorCoords.x,
-        cursorCoords.y
-      );
-
-      if (circleCoords) {
-        drawCircle(ctx, circleCoords);
-        setCurrentCircles((currentCircles) => ({
-          ...currentCircles,
-          [index]: circleCoords,
-        }));
-      }
-    });
-
-    history.circles.forEach((dots) =>
-      Object.values(dots).forEach((dot) => drawCircle(ctx, dot))
-    );
+    ca.moveLine(history, setCurrentCircles, currentMoveTo, cursorCoords);
   };
 
   return (
@@ -113,8 +56,8 @@ const Canvas: FC<CanvasProps> = ({
       onMouseMove={mouseMoveHandler}
       onClick={clickHandler}
       id="canvas"
-      width={width}
-      height={height}
+      width={cs?.width}
+      height={cs?.height}
     ></canvas>
   );
 };

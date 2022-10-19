@@ -17,7 +17,7 @@ export const calcShorterLine = ({ moveTo, lineTo, lengthX }: Line, step: number)
       moveTo.y,
   };
 
-  if (Math.abs(moveToX - lineToX) < 1) {
+  if (Math.abs(moveToX - lineToX) < 0.01) {
     return {
       moveTo: newMoveTo,
       lineTo: newMoveTo,

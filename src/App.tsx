@@ -1,74 +1,33 @@
 import { useState } from 'react';
 import './App.css';
-import { clearCanvas } from './CanvasAPI/clearCanvas';
-import { drawCircle } from './CanvasAPI/drawCircle';
-import { drawLine } from './CanvasAPI/drawLine';
 import Button from './components/Button/Button';
 import Canvas from './components/Canvas';
 import { useCanvas } from './hooks/useCanvas';
 import { History } from './models/History';
-import { Line } from './models/Line';
-import { calcShorterLine } from './utils/calcShorterLine';
-import { intersect } from './utils/intersect';
+import { CanvasAnimation } from './services/CanvasAnimation';
 
 const App = () => {
-  const { canvasRef, ctx, cursorCoords } = useCanvas();
+  const { canvasRef, cursorCoords, canvasService: cs } = useCanvas(800, 500);
   const [history, setHistory] = useState<History>({ lines: [], circles: [] });
-  const width = 800;
-  const height = 500;
 
   const buttonHandler = () => {
-    const animationLines: Line[] = JSON.parse(JSON.stringify(history.lines));
-    let animationCircles: Line[] = [];
-    const stopAnimation = new Set();
+    const ani = new CanvasAnimation(cs, history);
 
     function drawFrame() {
-      if (!ctx) return;
-      clearCanvas(ctx, width, height);
-      animationCircles = [];
+      cs.clearCanvas();
 
-      animationLines.forEach((line, index, arr) => {
-        const newLine = calcShorterLine(line, line.lengthX / 360);
-        drawLine(ctx, newLine);
+      ani.drawShorterLines();
+      ani.drawCircles();
 
-        if (newLine.moveTo.x === newLine.lineTo.x) {
-          console.log(1);
-          stopAnimation.add(index);
-        } else {
-          if (newLine.lengthX) {
-            arr[index] = newLine;
-            animationCircles.push(newLine);
-          }
-        }
-      });
-
-      animationCircles.forEach((line, index, arr) => {
-        for (let i = index; i < arr.length; i++) {
-          const circleCoords = intersect(
-            line.moveTo.x,
-            line.moveTo.y,
-            line.lineTo?.x,
-            line.lineTo?.y,
-            arr[i].moveTo.x,
-            arr[i].moveTo.y,
-            arr[i].lineTo.x,
-            arr[i].lineTo.y
-          );
-
-          if (circleCoords) {
-            drawCircle(ctx, circleCoords);
-          }
-        }
-      });
-
-      if (animationLines.length !== stopAnimation.size) {
+      if (ani.animationLines.length !== ani.stopAnimation.size) {
         requestAnimationFrame(drawFrame);
       }
-    };
+    }
 
     setHistory({ lines: [], circles: [] });
     requestAnimationFrame(drawFrame);
   };
+  console.log(cursorCoords);
 
   return (
     <div className="App">
@@ -76,10 +35,8 @@ const App = () => {
         history={history}
         setHistory={setHistory}
         canvasRef={canvasRef}
-        ctx={ctx}
         cursorCoords={cursorCoords}
-        width={width}
-        height={height}
+        cs={cs}
       />
       <Button onClick={buttonHandler}>Collaps lines</Button>
     </div>
