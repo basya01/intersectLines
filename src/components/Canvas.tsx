@@ -42,7 +42,7 @@ const Canvas: FC<CanvasProps> = ({
 
   const rightClickHandler = (e: React.MouseEvent<HTMLCanvasElement>) => {
     e.preventDefault();
-    ca.cancelDrawing(history);
+    ca.cancelDrawing(history, setCurrentMoveTo);
   };
 
   const mouseMoveHandler = (e: React.MouseEvent<HTMLCanvasElement>) => {

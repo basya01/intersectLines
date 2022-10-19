@@ -27,7 +27,6 @@ const App = () => {
     setHistory({ lines: [], circles: [] });
     requestAnimationFrame(drawFrame);
   };
-  console.log(cursorCoords);
 
   return (
     <div className="App">

@@ -1,8 +1,8 @@
-import { Dispatch, SetStateAction } from "react";
-import { Coords } from "../models/Coords";
-import { History } from "../models/History";
-import { intersect } from "../utils/intersect";
-import { CanvasDrawing } from "./CanvasDrawing";
+import { Dispatch, SetStateAction } from 'react';
+import { Coords } from '../models/Coords';
+import { History } from '../models/History';
+import { intersect } from '../utils/intersect';
+import { CanvasDrawing } from './CanvasDrawing';
 
 export class CanvasActions {
   cs: CanvasDrawing;
@@ -11,7 +11,10 @@ export class CanvasActions {
     this.cs = canvasService;
   }
 
-  cancelDrawing(history: History) {
+  cancelDrawing(
+    history: History,
+    setCurrentMoveTo: Dispatch<SetStateAction<Coords | null>>
+  ) {
     this.cs.clearCanvas();
 
     history.lines.forEach((line) => {
@@ -21,13 +24,15 @@ export class CanvasActions {
     history.circles.forEach((dots) =>
       Object.values(dots).forEach((dot) => this.cs.drawCircle(dot))
     );
+    
+    setCurrentMoveTo(null);
   }
 
   moveLine(
     history: History,
     setCurrentCircles: Dispatch<SetStateAction<{}>>,
     currentMoveTo: Coords | null,
-    cursorCoords: Coords 
+    cursorCoords: Coords
   ) {
     if (!currentMoveTo || !cursorCoords) return;
 
@@ -72,7 +77,7 @@ export class CanvasActions {
     setHistory: Dispatch<SetStateAction<History>>,
     cursorCoords: Coords,
     currentMoveTo: Coords,
-    currentCircles: Record<number, Coords>,
+    currentCircles: Record<number, Coords>
   ) {
     setCurrentMoveTo(null);
     setHistory((history) => ({
